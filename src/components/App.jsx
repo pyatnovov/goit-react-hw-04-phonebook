@@ -6,47 +6,18 @@ import { ContactList } from './ContactList/ContactList';
 import { useState, useEffect } from 'react';
 
 export const App = () => {
-  // state = {
-  //   contacts: [
-  //     { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-  //     { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-  //     { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-  //     { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-  //   ],
-  //   filter: '',
-  // };
   const [contacts, setContacts] = useState(() => {
-    return [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ];
+    return JSON.parse(window.localStorage.getItem('contacts')) ?? [];
   });
+
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    const savedContacts = localStorage.getItem('contacts');
-    if (savedContacts !== null) {
-      const parsedContacts = JSON.parse(savedContacts);
-      setContacts({ contacts: parsedContacts });
-      return;
-    }
-    setContacts({ contacts: contacts });
-  }, []);
-
-  // componentDidUpdate(_, prevState) {
-  //   if (prevState.contacts !== this.state.contacts) {
-  //     localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-  //   }
-  // }
-  useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
+    window.localStorage.setItem('contacts', JSON.stringify(contacts));
   }, [contacts]);
 
   const handleChange = e => {
-    const { name, value } = e.target;
-    setContacts({ [name]: value });
+    setFilter(e.target.value);
   };
 
   const handleSubmit = e => {
@@ -54,26 +25,34 @@ export const App = () => {
     const name = e.name;
     const number = e.number;
     const contactsLists = [...contacts];
-
-    if (contactsLists.findIndex(contact => name === contact.name) !== -1) {
-      alert(`${name} is already in contacts.`);
-    } else {
-      contactsLists.push({ name, id, number });
+    if (name === '') {
+      alert("Введіть ім'я");
+      return;
     }
-
-    setContacts({ contacts: contactsLists });
+    if (number === '') {
+      alert('Введіть номер');
+      return;
+    }
+    if (contactsLists.find(contact => contact.name === name)) {
+      alert(`Користувач за ім'ям ${name} вже є`);
+      return;
+    }
+    const newContact = {
+      id: id,
+      name,
+      number,
+    };
+    setContacts(prevState => [...prevState, newContact]);
   };
 
   const handleDelete = id => {
-    setContacts(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+    setContacts(contacts.filter(contact => contact.id !== id));
   };
 
   const getFilteredContacts = () => {
-    return contacts.filter(contact => {
-      return contact.name.toLowerCase().includes(filter.toLowerCase());
-    });
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter)
+    );
   };
 
   <GlobalStyle />;
@@ -93,7 +72,7 @@ export const App = () => {
       <h1>Phonebook</h1>
       <ContactForm handleSubmit={handleSubmit} />
       <h2> Contacts</h2>
-      <Filter filter={filter} handleChange={handleChange} />
+      <Filter value={filter} handleChange={handleChange} />
       <ContactList
         contacts={getFilteredContacts()}
         handleDelete={handleDelete}
